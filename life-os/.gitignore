@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.env
+test_kb/
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,7 @@
+google-genai
+PyGithub
+python-dotenv
+pydantic
+pydantic-settings
+watchdog
+PyYAML
