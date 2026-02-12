@@ -42,7 +42,8 @@ def main():
         while True:
             print("\n--- Life OS Menu ---")
             print("1. Create New Project")
-            print("2. Exit")
+            print("2. Help & Instructions")
+            print("3. Exit")
             choice = input("Enter choice: ").strip()
 
             if choice == "1":
@@ -53,6 +54,15 @@ def main():
                 else:
                     print("Invalid input.")
             elif choice == "2":
+                print("\n" + "="*50)
+                print("   Life OS Quick Start Guide")
+                print("="*50)
+                print("1. Sync Tasks: Tasks sync automatically every 60s via GitHub.")
+                print("2. Create Project: Use Option 1 to scaffold folders.")
+                print("3. Input: Drop .mp3 or .txt files into 'Inbox/' folder.")
+                print("4. Daily Log: Check 'Logs/' folder for today's tasks.")
+                print("="*50 + "\n")
+            elif choice == "3":
                 logger.info("Shutting down...")
                 observer.stop()
                 observer.join()
