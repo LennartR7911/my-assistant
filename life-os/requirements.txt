@@ -5,3 +5,16 @@ pydantic
 pydantic-settings
 watchdog
 PyYAML
+chromadb
+streamlit
+google-api-python-client
+google-auth-oauthlib
+google-auth-httplib2
+python-docx
+python-pptx
+pypdf
+Pillow
+sentence-transformers
+python-docx
+python-pptx
+pypdf

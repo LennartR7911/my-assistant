@@ -5,6 +5,7 @@ from pathlib import Path
 from src.core.config import settings
 from src.core.github_client import GitHubClient
 from src.core.gemini_client import GeminiClient
+from src.core.rag_engine import RAGClient
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -13,56 +14,22 @@ class TaskEnricher:
     def __init__(self):
         self.github = GitHubClient()
         self.gemini = GeminiClient()
-        self.context_cache = {} # Simple cache, could use TTL
-
-    def load_project_contexts(self):
-        """Loads all context.yaml files from Projects directory."""
-        projects_path = Path(settings.KNOWLEDGE_BASE_PATH) / "Projects"
-        contexts = []
-        if projects_path.exists():
-            for context_file in projects_path.rglob("context.yaml"):
-                try:
-                    with open(context_file, "r") as f:
-                        data = yaml.safe_load(f)
-                        contexts.append(data)
-                except Exception as e:
-                    logger.warning(f"Failed to read context file {context_file}: {e}")
-        return contexts
-
-    def find_relevant_logs(self, keywords):
-        """Scans recent logs for keywords."""
-        logs_path = Path(settings.KNOWLEDGE_BASE_PATH) / "Logs"
-        relevant_snippets = []
-        if logs_path.exists():
-            # Check last 5 log files
-            log_files = sorted(logs_path.glob("*.md"), reverse=True)[:5]
-            for log_file in log_files:
-                try:
-                    with open(log_file, "r", encoding="utf-8") as f:
-                        content = f.read()
-                        # Simple keyword matching (case-insensitive)
-                        if any(kw.lower() in content.lower() for kw in keywords):
-                            relevant_snippets.append(f"From {log_file.name}:\n{content[:500]}...") # Snippet
-                except Exception as e:
-                    logger.warning(f"Failed to read log file {log_file}: {e}")
-        return "\n\n".join(relevant_snippets)
+        self.rag = RAGClient()
+        # Initial index on startup
+        try:
+            self.rag.index_knowledge_base()
+        except Exception as e:
+            logger.error(f"Failed to initialize RAG: {e}")
 
     def enrich_issue(self, issue):
         logger.info(f"Enriching issue #{issue.number}: {issue.title}")
 
-        # 1. Gather Context
-        project_contexts = self.load_project_contexts()
-
-        # Extract keywords from title (simple split)
-        keywords = issue.title.split()
-        log_context = self.find_relevant_logs(keywords)
+        # 1. Gather Context via RAG
+        query = f"{issue.title} {issue.body}"
+        rag_context = self.rag.search(query, n_results=5)
 
         # Format context for Gemini
-        context_str = "Project Contexts:\n"
-        for ctx in project_contexts:
-            context_str += yaml.dump(ctx, sort_keys=False) + "\n---\n"
-
-        context_str += f"\nRelevant Logs:\n{log_context}"
+        context_str = f"Relevant Knowledge Base Context:\n{rag_context}"
 
         # 2. Call Gemini
         prompt = f"""
